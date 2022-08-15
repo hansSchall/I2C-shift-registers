@@ -22,6 +22,7 @@ bool changed[8] = { true };
 void setup() {
     DDRD = dir;
     PORTD = 0;
+    // control pins
     DDRB |= 0b00000111;
 
     Wire.begin(addr);
@@ -32,19 +33,25 @@ void setup() {
 void loop() {
 
     uint8_t addrBB = 0;
+    // [STORE + /LOAD] = 1
     PORTB |= 0b10;
     while (addrBB < 64) {
         uint8_t oldValue = states[addrBB];
+        // write all outputs
         PORTD = oldValue & dir;
+        // save the new input states and keep the old output stated
         states[addrBB] = (PIND & ~dir) | (oldValue & dir);
+        // CLK pulse
         PORTB |= 1;
         PORTB &= ~1;
         if (states[addrBB] != oldValue) {
+            // Input changed
             changed[addrBB] = true;
             PORTB |= 0b00000100;
         }
         addrBB++;
     }
+    // [STORE + /LOAD] = 0
     PORTB &= ~0b10;
 }
 
